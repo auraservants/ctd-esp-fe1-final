@@ -10,15 +10,15 @@ import Paginacion from "../componentes/paginacion/paginacion.componente";
  * 
  * @returns la pagina de inicio
  */
-const PaginaInicio = () => {
+const PaginaInicio = (): JSX.Element => {
     return <div className="container">
         <div className="actions">
             <h3>Catálogo de Personajes</h3>
-            <button className="danger">Test Button</button>
+            {/* <button className="danger">Test Button</button> */}
         </div>
         <Filtros />
         <Paginacion />
-        <GrillaPersonajes />
+        <GrillaPersonajes tipo="personajes" />
         <Paginacion />
     </div>
 }
