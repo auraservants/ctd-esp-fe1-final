@@ -7,29 +7,48 @@ import { Personaje } from "../types/personajeType";
  * @function
  * @async
  * @name getPersonajes
- * @param {string} name - Nombre del personaje a buscar.
- * @returns {Promise<Personaje[]>} - Lista de objetos Personaje.
+ * @param {number} page - Numero de pagina.
+ * @returns {Promise<Object>} - Una promesa que trae los datos recibidos de la api.
  * @throws {Error} - Si la respuesta de la API no es exitosa.
  */
 
-export const getPersonajes = createAsyncThunk('personajes/getPersonajes', async (name?: string) => {
-    const url = name ? `https://rickandmortyapi.com/api/character/?name=${name}` : 'https://rickandmortyapi.com/api/character'
+export const getPersonajes = createAsyncThunk('personajes/getPersonajes', async (page: number) => {
+    const url = `https://rickandmortyapi.com/api/character/?page=${page}`
     const response = await fetch(url);
     if (!response.ok){
-        throw new Error('No se encontro tu busqueda')
+        throw new Error('No pudimos cargar la informacion')
     } 
     const data = await response.json();
-    return data.results as Personaje[];
+    return data;
 })
 
+/**
+ * Funcion asincronica que filtra los personajes de la API.
+ * @function
+ * @async
+ * @name getPersonajesFiltrados
+ * @param {string} name - Nombre del personaje a filtrar.
+ * @returns {Promise<Object>} - Una promesa que trae los datos recibidos de la api.
+ * @throws {Error} - Si la respuesta de la API no es exitosa o no hay ningun match de personajes.
+ */
+export const getPersonajesFiltrados = createAsyncThunk('personajes/getPersonajesFiltrados', async (name: string) => {
+    const url = `https://rickandmortyapi.com/api/character/?name=${name}`
+    const response = await fetch(url)
+    if(response.ok){
+        const data = await response.json()
+        return data
+    } else {
+        throw new Error('No se encontro tu personaje')
+    }
+})
 
 export interface PersonajeState {
     personajes: Personaje[]
     status: 'loading' | 'succeeded' | 'failed'
     error: string | null
-    filtrados: Personaje[]
-    busqueda: string
-    favoritos: Personaje[]
+    name: string
+    page: number
+    favoritos: number[]
 }
 
 
@@ -37,8 +56,8 @@ const initialState: PersonajeState = {
     personajes: [],
     status: 'loading',
     error: null,
-    filtrados: [],
-    busqueda: '',
+    name: '',
+    page: 1,
     favoritos: []
 } as PersonajeState
 
@@ -48,19 +67,17 @@ export const personajeSlice = createSlice({
     name: "personajes",
     initialState,
     reducers: {
-        setBusqueda: (state, action: PayloadAction<string>) => {
-            state.busqueda = action.payload
+        setFavorito: (state, action) => {
+            state.favoritos = action.payload
         },
-        setFavorito: (state, action: PayloadAction<number>) => {
-            const personaje = state.personajes.find(p => p.id === action.payload)
-            if (personaje) {
-                personaje.esFavorito = !personaje.esFavorito
-                if (personaje.esFavorito) {
-                    state.favoritos.push(personaje)
-                } else {
-                    state.favoritos = state.favoritos.filter(p => p.id !== personaje.id)
-                }
-            }
+        unsetFavoritos: (state) => {
+            state.favoritos = []
+        },
+        setAnterior: (state) => {
+            state.page -= 1
+        },
+        setSiguiente: (state) => {
+            state.page += 1
         }
     },
     extraReducers: builder => {
@@ -68,29 +85,32 @@ export const personajeSlice = createSlice({
             state.status = 'loading'
             state.error = ''
         })
-        builder.addCase(getPersonajes.fulfilled, (state, action: PayloadAction<Personaje[]>) => {
+        builder.addCase(getPersonajes.fulfilled, (state, action) => {
             state.status = 'succeeded'
-            state.personajes = action.payload
-            // filtro
-            if (state.busqueda !== ''){
-                state.filtrados = state.personajes.filter((personaje) => 
-                    personaje.name.toLowerCase().includes(state.busqueda.toLowerCase()))
-            } else {
-                state.filtrados = state.personajes
-                // dudosa solucion del error // 
-                state.error = ''
-            }
+            state.personajes = action.payload.results
         })
         builder.addCase(getPersonajes.rejected, (state, action) => {
             state.status = 'failed'
             state.error = action.error.message ?? 'Error en la carga de personajes'
+        })
+        builder.addCase(getPersonajesFiltrados.pending, (state) => {
+            state.status = 'loading'
+            state.error = ''
+        })
+        builder.addCase(getPersonajesFiltrados.fulfilled, (state, action) => {
+            state.status = 'succeeded'
+            state.personajes = action.payload.results
+        })
+        builder.addCase(getPersonajesFiltrados.rejected, (state, action) => {
+            state.status = 'failed'
+            state.error = action.error.message ?? 'Error en el filtro de personajes'
         })
     },
     
 })
 
 
-export const { setBusqueda, setFavorito } = personajeSlice.actions
+export const { setFavorito, unsetFavoritos, setAnterior, setSiguiente} = personajeSlice.actions
 export default personajeSlice.reducer
 
 

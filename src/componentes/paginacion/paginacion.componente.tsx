@@ -1,3 +1,4 @@
+import { MouseEventHandler } from 'react';
 import './paginacion.css';
 
 /**
@@ -8,11 +9,16 @@ import './paginacion.css';
  * 
  * @returns un JSX element 
  */
-const Paginacion = (): JSX.Element => {
+
+interface Props {
+    anterior: MouseEventHandler<HTMLButtonElement>
+    siguiente: MouseEventHandler<HTMLButtonElement>
+}
+const Paginacion = ( {anterior, siguiente}: Props): JSX.Element => {
 
     return <div className="paginacion">
-        <button disabled={true} className={"primary"}>Anterior</button>
-        <button disabled={false} className={"primary"}>Siguiente</button>
+        <button disabled={false} onClick={anterior} className={"primary"}>Anterior</button>
+        <button disabled={false} onClick={siguiente} className={"primary"}>Siguiente</button>
     </div>
 }
 

@@ -4,28 +4,13 @@ import { Personaje } from '../../types/personajeType';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import PropTypes from 'prop-types';
-
-
 interface Props {
-  tipo: 'personajes' | 'favoritos';
+  personajes: Personaje[]
+  onClick: (id: number) => void
+  favoritos: number[]
 }
 
-const GrillaPersonajes = ({ tipo }: Props): JSX.Element => {
-
-  /**
-   * Selecciona los personajes del estado según el tipo.
-   * @param {Object} state Estado de la app.
-   * @param {string} state.personajes.personajes Lista de personajes.
-   * @param {string} state.personajes.favoritos Lista de personajes favoritos.
-   * @returns {Array} Lista de personajes seleccionados.
-   */
-  const personajes = useSelector((state: RootState) => {
-    if (tipo === 'favoritos') {
-      return state.personajes.favoritos;
-    } else {
-      return state.personajes.personajes;
-    }
-  });
+const GrillaPersonajes = ({ personajes, onClick, favoritos }: Props): JSX.Element => {
 
   const isLoading = useSelector((state: RootState) => state.personajes.status === 'loading');
   const error = useSelector((state: RootState) => state.personajes.error);
@@ -38,14 +23,11 @@ const GrillaPersonajes = ({ tipo }: Props): JSX.Element => {
     return <div>{error}</div>;
   }
 
-  if (personajes.length === 0) {
-    return <div>No se ha agregado ningun personaje a favoritos.</div>;
-  }
-
     return (
       <div className="grilla-personajes">
-        {personajes && personajes.map((personaje: Personaje) => (
-          <TarjetaPersonaje personaje={personaje} key={personaje.id}  />
+        {personajes?.map((personaje) => (
+          <TarjetaPersonaje personaje={personaje} key={personaje.id} onClick={() => onClick(personaje.id)}
+          esFavorito={favoritos.some((favorito) => favorito === personaje.id)} />
         ))}
       </div>
     );
@@ -54,5 +36,14 @@ const GrillaPersonajes = ({ tipo }: Props): JSX.Element => {
 export default GrillaPersonajes;
 
 GrillaPersonajes.propTypes = {
-  tipo: PropTypes.oneOf(['personajes', 'favoritos']).isRequired,
+  personajes: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      image: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  onClick: PropTypes.func.isRequired,
+  favoritos: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
+
